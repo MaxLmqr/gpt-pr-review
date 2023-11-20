@@ -33357,9 +33357,19 @@ const axios_1 = __importDefault(__nccwpck_require__(8757));
 const utils_1 = __nccwpck_require__(1314);
 const CONTEXT_LENGTH = 128000;
 const COMMENT_POSITION = 1;
+const RETURN_CODES = {
+    SUCCESS: 0,
+    FAILURE: 1
+};
+const handleError = (error, core) => {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error :c';
+    core.setFailed(errorMessage);
+    console.error(errorMessage);
+    return RETURN_CODES.FAILURE;
+};
 /**
  * The main function for the action.
- * @returns {Promise<void>} Resolves when the action is complete.
+ * @returns {Promise<number>} Resolves when the action is complete.
  */
 async function run() {
     try {
@@ -33436,8 +33446,8 @@ async function run() {
                         });
                     }
                 }
-                catch (err) {
-                    console.log(err);
+                catch (error) {
+                    return handleError(error, core);
                 }
             }
             else {
@@ -33447,9 +33457,9 @@ async function run() {
     }
     catch (error) {
         // Fail the workflow run if an error occurs
-        if (error instanceof Error)
-            core.setFailed(error.message);
+        return handleError(error, core);
     }
+    return RETURN_CODES.SUCCESS;
 }
 exports.run = run;
 
@@ -33464,9 +33474,9 @@ exports.run = run;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.baseContent = void 0;
 exports.baseContent = `You will receive a GitHub patch file content. Keep in mind that you are here to help a lead developer reviewing a pull request from a developer.
-Rate the code from 1 to 10. 1 being the worst and 10 being the best. You can assume that the code is not breaking anything.
-Answer with the sentence : "No comment" if the rate is equal or above 9, or if there is no significant modification.
-Do not comment with compliment about the code. Keep your answers very brief. Do not overthink it.
+Rate the code from 1 to 100. 1 being the worst and 100 being a clean code. You can assume that the code is not breaking anything. The developer knows what he's doing and is not doing any architecture mistake.
+Answer with the sentence : "No comment" if the rate is equal or above 80, or if there is no significant modification.
+Do not comment with compliment about the code. Keep your answers very brief.
 Check the code syntax, improvment, logic, performance, readability, maintainability, reusability, complexity, best practice, convention.
 Provide snippet to explain the possible improvment.
 Do NOT explain what the code is doing. Answer with the rate, followed by a numbered list : \n`;
