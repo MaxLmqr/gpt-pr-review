@@ -33419,7 +33419,7 @@ async function run() {
             if (numberOfCharacters < fileSizeLimit) {
                 try {
                     const { data: gptResponse } = await axios_1.default.post('https://api.openai.com/v1/chat/completions', {
-                        model: 'gpt-4-1106-preview',
+                        model: 'gpt-4',
                         messages: [
                             {
                                 role: 'user',
@@ -33432,7 +33432,6 @@ async function run() {
                         }
                     });
                     const review = gptResponse.choices[0].message.content;
-                    console.log(review);
                     if (!review.includes('No comment')) {
                         // Comment PR with GPT response
                         await octokit.rest.pulls.createReviewComment({
