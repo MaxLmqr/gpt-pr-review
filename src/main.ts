@@ -86,7 +86,7 @@ export async function run(): Promise<number> {
           const { data: gptResponse } = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-              model: 'gpt-4-1106-preview',
+              model: 'gpt-4',
               messages: [
                 {
                   role: 'user',
@@ -101,7 +101,6 @@ export async function run(): Promise<number> {
             }
           )
           const review = gptResponse.choices[0].message.content
-          console.log(review)
 
           if (!review.includes('No comment')) {
             // Comment PR with GPT response
