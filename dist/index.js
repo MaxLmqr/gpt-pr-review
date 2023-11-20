@@ -33477,10 +33477,11 @@ exports.run = run;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.systemContent = exports.baseContent = void 0;
 exports.baseContent = `You will receive a GitHub patch file content.
-Assume that the code is not breaking anything. The developer knows what he's doing and is not doing any architecture mistake. Ignore the implication of the code outside of the file. Do not comment with compliment about the code.
+Assume that the code is not breaking anything. Ignore the implication of the code outside of the file. Do not comment with compliment about the code.
 Rate the code from 1 to 100. 1 being the worst and 100 the best. Comment with the rate.
 Answer with the sentence "No comment" if the rate is equal or above 80, or if there is no significant modification.
-Do NOT explain what the code is doing. if the file is not a code file, answer "No comment".\n`;
+Do NOT explain what the code is doing. if the file is not a code file, answer "No comment".
+Provide comment :\n`;
 exports.systemContent = `You are a lead developer and you are reviewing a pull request from a junior developer.`;
 
 
