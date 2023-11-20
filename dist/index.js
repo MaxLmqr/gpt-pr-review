@@ -33478,7 +33478,7 @@ Do not comment on anything that COULD happen because of the modification.
 Do not comment with compliment about the code. Do not assume any external factor.
 Check for possible code improvment based on best practices. 
 Rate the code from 1 to 100. 1 being the worst and 100 the best.
-Answer with the sentence : "No comment" if the rate is equal or above 80, or if there is no significant modification.
+Answer : "No comment" if the rate is equal or above 80, or if there is no significant modification.
 Do NOT explain what the code is doing. Answer with the rate, followed by a numbered list, the following patch : \n`;
 
 
