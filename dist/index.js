@@ -33427,7 +33427,7 @@ async function run() {
                             },
                             {
                                 role: 'user',
-                                content: `${utils_1.baseContent}${patch}`
+                                content: `${utils_1.baseContentGPT}${patch}`
                             }
                         ]
                     }, {
