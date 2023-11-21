@@ -33422,6 +33422,10 @@ async function run() {
                         model: 'gpt-4-1106-preview',
                         messages: [
                             {
+                                role: 'system',
+                                content: utils_1.systemContent
+                            },
+                            {
                                 role: 'user',
                                 content: `${utils_1.baseContent}${patch}`
                             }
@@ -33432,7 +33436,6 @@ async function run() {
                         }
                     });
                     const review = gptResponse.choices[0].message.content;
-                    console.log(review);
                     if (!review.includes('No comment')) {
                         // Comment PR with GPT response
                         await octokit.rest.pulls.createReviewComment({
@@ -33472,14 +33475,12 @@ exports.run = run;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.baseContent = void 0;
-exports.baseContent = `You will receive a GitHub patch file content. Keep in mind that you are here to help a lead developer reviewing a pull request from a developer.
-Rate the code from 1 to 100. 1 being the worst and 100 being a clean code. You can assume that the code is not breaking anything. The developer knows what he's doing and is not doing any architecture mistake.
-Answer with the sentence : "No comment" if the rate is equal or above 80, or if there is no significant modification.
-Do not comment with compliment about the code. Keep your answers very brief.
-Check the code syntax, improvment, logic, performance, readability, maintainability, reusability, complexity, best practice, convention.
-Provide snippet to explain the possible improvment.
-Do NOT explain what the code is doing. Answer with the rate, followed by a numbered list : \n`;
+exports.systemContent = exports.baseContent = void 0;
+exports.baseContent = `Please review the following GitHub patch file, assuming the developer is experienced and knowledgeable. 
+Focus your evaluation on adherence to coding best practices, readability, and style, without considering the functionality or potential future issues of the code. 
+Do not explain what the code is doing functionally. If the context is insufficient, answer with "No comment". 
+Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. If the rate is equal or above 80, simply answer "No comment". Otherwise, review with snippet if possible.`;
+exports.systemContent = `You are a lead developer and you are reviewing a pull request from a developer. Your aim is to point out only the relevant code.`;
 
 
 /***/ }),
