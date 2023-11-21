@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import axios from 'axios'
-import { baseContent, baseContentGPT, systemContent } from './utils'
+import { baseContent, systemContent } from './utils'
 
 const CONTEXT_LENGTH = 128000
 const COMMENT_POSITION = 1
@@ -94,7 +94,7 @@ export async function run(): Promise<number> {
                 },
                 {
                   role: 'user',
-                  content: `${baseContentGPT}${patch}`
+                  content: `${baseContent}${patch}`
                 }
               ]
             },
