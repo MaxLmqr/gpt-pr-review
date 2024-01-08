@@ -21,6 +21,10 @@ const handleError = (
   core.setFailed(errorMessage)
   console.error(errorMessage)
 
+  if (axios.isAxiosError(error)) {
+    core.setFailed(error.response?.data)
+  }
+
   return RETURN_CODES.FAILURE
 }
 
@@ -71,7 +75,9 @@ export async function run(): Promise<number> {
           repo,
           comment_id: comment.id
         })
-        console.log(`Deleted comment at position ${COMMENT_POSITION}`)
+        console.log(
+          `Deleted comment at position ${COMMENT_POSITION} - ${comment.path}`
+        )
       }
     }
 
