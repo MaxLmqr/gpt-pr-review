@@ -5,7 +5,6 @@ branding:
   icon: 'aperture'
   color: 'green'
 
-# Define your inputs here.
 inputs:
   github-token:
     required: true
