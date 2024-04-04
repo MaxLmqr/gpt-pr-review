@@ -91,7 +91,7 @@ export async function run(): Promise<number> {
           repo,
           comment_id: comment.id
         })
-        console.log(`Deleted comment ${comment.body}`)
+        console.log(`Deleted comment ${comment.line} on ${comment.path}`)
       }
     }
 

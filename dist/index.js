@@ -32780,7 +32780,7 @@ async function run() {
                     repo,
                     comment_id: comment.id
                 });
-                console.log(`Deleted comment ${comment.body}`);
+                console.log(`Deleted comment ${comment.line} on ${comment.path}`);
             }
         }
         core.debug(`Processing PR files for ${owner}/${repo}#${number}...`);
