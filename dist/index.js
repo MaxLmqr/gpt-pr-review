@@ -32837,7 +32837,7 @@ async function run() {
                                 body: reviewItem.message,
                                 path: filePath,
                                 commit_id: commitId,
-                                position: reviewItem.line
+                                line: reviewItem.line
                             });
                         }
                         catch (error) {
@@ -32921,7 +32921,7 @@ const getLineToComment = (hunk) => {
     if (!hunkHeader) {
         return null;
     }
-    return hunkHeader.originalStartLine + hunkHeader.originalLineCount - 1;
+    return hunkHeader.newStartLine + hunkHeader.newLineCount - 1;
 };
 exports.getLineToComment = getLineToComment;
 const shouldExcludeFile = (fileName) => {

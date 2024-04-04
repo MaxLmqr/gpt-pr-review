@@ -171,7 +171,7 @@ export async function run(): Promise<number> {
                 body: reviewItem.message,
                 path: filePath,
                 commit_id: commitId,
-                position: reviewItem.line
+                line: reviewItem.line
               })
             } catch (error) {
               core.error(`Invalid review item: ${JSON.stringify(reviewItem)}`)
