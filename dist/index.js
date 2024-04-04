@@ -32759,11 +32759,12 @@ async function run() {
         const commitId = pr.head.sha;
         // Get PR files modified
         core.info(`Fetching PR files for ${owner}/${repo}#${number}...`);
-        const { data: files } = await octokit.rest.pulls.listFiles({
+        const { data: fileList } = await octokit.rest.pulls.listFiles({
             owner,
             repo,
             pull_number: number
         });
+        const files = fileList.filter(file => !(0, utils_1.shouldExcludeFile)(file.filename));
         // List comments on the pull request
         core.info(`Fetching PR comments for ${owner}/${repo}#${number}...`);
         const { data: comments } = await octokit.rest.pulls.listReviewComments({
@@ -32810,10 +32811,10 @@ async function run() {
                 });
                 const review = JSON.parse(gptResponse.choices[0].message.content);
                 const formattedReviews = review.reviews.map(reviewItem => {
-                    const hunkHeader = (0, utils_1.parseHunkHeader)(reviewItem.hunk);
+                    const line = (0, utils_1.getLineToComment)(reviewItem.hunk);
                     return {
                         ...reviewItem,
-                        line: hunkHeader.newStartLine + hunkHeader.newLineCount
+                        line
                     };
                 });
                 if (review.score < 75) {
@@ -32855,18 +32856,42 @@ exports.run = run;
 /***/ }),
 
 /***/ 1314:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
+exports.shouldExcludeFile = exports.getLineToComment = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
 Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
 Answer with a numbered list. Do not go beyond 5 reviews you found in the code. You can provide less than 5 reviews. Each item should be a single concise sentence.
 Use the folowing json format : { "score": value, "reviews": [{ hunk: hunk header where comment should appear, message: "content of the comment}, ...]}`;
 exports.systemContent = `You are a software engineer reviewing a patch file from a pull request.`;
-function parseHunkHeader(header) {
+const parseHunkHeader = (header) => {
     // Regular expression to match the hunk header format
     const regex = /@@ \-(\d+),(\d+) \+(\d+),(\d+) @@/;
     const match = header.match(regex);
@@ -32879,10 +32904,25 @@ function parseHunkHeader(header) {
         };
     }
     else {
-        throw new Error('Invalid hunk header format');
+        core.error(`Invalid hunk header: ${header}`);
     }
-}
+};
 exports.parseHunkHeader = parseHunkHeader;
+const getLineToComment = (hunk) => {
+    const hunkHeader = (0, exports.parseHunkHeader)(hunk);
+    if (!hunkHeader) {
+        return 1;
+    }
+    return hunkHeader.newStartLine + hunkHeader.newLineCount;
+};
+exports.getLineToComment = getLineToComment;
+const shouldExcludeFile = (fileName) => {
+    if (fileName.includes('.lock')) {
+        return true;
+    }
+    return false;
+};
+exports.shouldExcludeFile = shouldExcludeFile;
 
 
 /***/ }),

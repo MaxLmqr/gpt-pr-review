@@ -1,7 +1,13 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import axios from 'axios'
-import { baseContent, parseHunkHeader, systemContent } from './utils'
+import {
+  baseContent,
+  getLineToComment,
+  parseHunkHeader,
+  shouldExcludeFile,
+  systemContent
+} from './utils'
 
 type GptResponseFormat = {
   choices: {
@@ -68,11 +74,13 @@ export async function run(): Promise<number> {
 
     // Get PR files modified
     core.info(`Fetching PR files for ${owner}/${repo}#${number}...`)
-    const { data: files } = await octokit.rest.pulls.listFiles({
+    const { data: fileList } = await octokit.rest.pulls.listFiles({
       owner,
       repo,
       pull_number: number
     })
+
+    const files = fileList.filter(file => !shouldExcludeFile(file.filename))
 
     // List comments on the pull request
     core.info(`Fetching PR comments for ${owner}/${repo}#${number}...`)
@@ -131,10 +139,10 @@ export async function run(): Promise<number> {
         ) as ReviewJsonFormat
 
         const formattedReviews = review.reviews.map(reviewItem => {
-          const hunkHeader = parseHunkHeader(reviewItem.hunk)
+          const line = getLineToComment(reviewItem.hunk)
           return {
             ...reviewItem,
-            line: hunkHeader.newStartLine + hunkHeader.newLineCount
+            line
           }
         })
 
