@@ -3,8 +3,20 @@ import * as github from '@actions/github'
 import axios from 'axios'
 import { baseContent, systemContent } from './utils'
 
-const CONTEXT_LENGTH = 128000
-const COMMENT_POSITION = 1
+type GptResponseFormat = {
+  choices: {
+    index: number
+    message: {
+      content: string
+    }
+    finish_reason: string
+  }[]
+}
+
+type ReviewJsonFormat = {
+  score: number
+  reviews: { line: number; message: string }[]
+}
 
 const RETURN_CODES = {
   SUCCESS: 0,
@@ -45,6 +57,7 @@ export async function run(): Promise<number> {
     // Get the context
     const { owner, repo, number } = github.context.issue
 
+    core.debug(`Fetching PR data for ${owner}/${repo}#${number}...`)
     const { data: pr } = await octokit.rest.pulls.get({
       owner,
       repo,
@@ -54,6 +67,7 @@ export async function run(): Promise<number> {
     const commitId = pr.head.sha
 
     // Get PR files modified
+    core.debug(`Fetching PR files for ${owner}/${repo}#${number}...`)
     const { data: files } = await octokit.rest.pulls.listFiles({
       owner,
       repo,
@@ -61,6 +75,7 @@ export async function run(): Promise<number> {
     })
 
     // List comments on the pull request
+    core.debug(`Fetching PR comments for ${owner}/${repo}#${number}...`)
     const { data: comments } = await octokit.rest.pulls.listReviewComments({
       owner,
       repo,
@@ -68,67 +83,69 @@ export async function run(): Promise<number> {
     })
 
     // Find and delete the comment at the specific position
+    core.debug(`Deleting existing comments for ${owner}/${repo}#${number}...`)
     for (const comment of comments) {
-      if (comment.position === COMMENT_POSITION) {
+      if (comment.user.login === 'github-actions[bot]') {
         await octokit.rest.pulls.deleteReviewComment({
           owner,
           repo,
           comment_id: comment.id
         })
-        console.log(
-          `Deleted comment at position ${COMMENT_POSITION} - ${comment.path}`
-        )
+        console.log(`Deleted comment ${comment.body}`)
       }
     }
 
+    core.debug(`Processing PR files for ${owner}/${repo}#${number}...`)
     for (const file of files) {
       const filePath = file.filename
       const patch = file.patch
-      const numberOfCharacters = patch?.length || 0
-      const fileSizeLimit = CONTEXT_LENGTH - baseContent.length
       // Send the patch data to ChatGPT for review
-      if (numberOfCharacters < fileSizeLimit) {
-        try {
-          const { data: gptResponse } = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-              model: 'gpt-4-1106-preview',
-              messages: [
-                {
-                  role: 'system',
-                  content: systemContent
-                },
-                {
-                  role: 'user',
-                  content: `${baseContent}${patch}`
-                }
-              ]
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${gptApiKey}`
+      try {
+        core.debug(
+          `Sending patch data to ChatGPT for ${owner}/${repo}#${number}...`
+        )
+        const { data: gptResponse } = await axios.post<GptResponseFormat>(
+          'https://api.openai.com/v1/chat/completions',
+          {
+            model: 'gpt-4-1106-preview',
+            messages: [
+              {
+                role: 'system',
+                content: systemContent
+              },
+              {
+                role: 'user',
+                content: `${baseContent}${patch}`
               }
+            ],
+            response_format: { type: 'json_object' }
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${gptApiKey}`
             }
-          )
-          const review = gptResponse.choices[0].message.content
+          }
+        )
+        const review = JSON.parse(
+          gptResponse.choices[0].message.content
+        ) as ReviewJsonFormat
 
-          if (!review.includes('No comment')) {
-            // Comment PR with GPT response
+        if (review.score < 75) {
+          // Comment PR with GPT response
+          for (const reviewItem of review.reviews) {
             await octokit.rest.pulls.createReviewComment({
               owner,
               repo,
               pull_number: number,
-              body: review,
+              body: reviewItem.message,
               path: filePath,
               commit_id: commitId,
-              position: COMMENT_POSITION
+              position: reviewItem.line
             })
           }
-        } catch (error) {
-          return handleError(error, core)
         }
-      } else {
-        console.log('File is too large.')
+      } catch (error) {
+        return handleError(error, core)
       }
     }
   } catch (error) {
