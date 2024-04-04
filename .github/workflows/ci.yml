@@ -1,11 +1,9 @@
 name: Continuous Integration
 
 on:
-  pull_request:
-  # push:
-  #   branches:
-  #     - main
-  #     - 'releases/*'
+  push:
+    branches:
+      - main
 
 jobs:
   test-typescript:
@@ -33,8 +31,8 @@ jobs:
         run: npm run format:check
 
       - name: Test
-        id: npm-ci-test
-        run: npm run ci-test
+        id: npm-test
+        run: npm test
 
   test-action:
     name: GitHub Actions Test

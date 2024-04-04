@@ -29,7 +29,7 @@ jobs:
   gpt-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: galadrimteam/gpt-pr-review@1.2.5
+      - uses: galadrimteam/gpt-pr-review@1.3.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gpt-api-key: ${{ secrets.GPT_API_KEY }}

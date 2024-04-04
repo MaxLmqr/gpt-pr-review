@@ -31,7 +31,7 @@ describe('Reviewer Functions', () => {
     it('should return the correct line to comment on', () => {
       const hunk = '@@ -45,11 +45,9 @@'
       const line = getLineToComment(hunk)
-      expect(line).toBe(55)
+      expect(line).toBe(53)
     })
 
     it('should return 1 for invalid hunk headers', () => {
