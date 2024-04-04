@@ -32888,8 +32888,8 @@ exports.shouldExcludeFile = exports.getLineToComment = exports.parseHunkHeader =
 const core = __importStar(__nccwpck_require__(2186));
 exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
 Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
-Answer with a numbered list. Do not go beyond 5 reviews you found in the code. You can provide less than 5 reviews. Each item should be a single concise sentence.
-Use the folowing json format : { "score": value, "reviews": [{ hunk: hunk header where comment should appear, message: "content of the comment}, ...]}`;
+Answer with a numbered list. Do not go beyond 5 reviews you found in the code. You can provide less than 5 reviews. Each item should be a single concise sentence. You can provide a snippet of a code improvment.
+Use the folowing json format : { "score": value, "reviews": [{ hunk: hunk header where comment should appear, it should have the format "@@ -number, number +number, number @@" , message: "content of the comment}, ...]}`;
 exports.systemContent = `You are a software engineer reviewing a patch file from a pull request.`;
 const parseHunkHeader = (header) => {
     // Regular expression to match the hunk header format
@@ -32913,7 +32913,7 @@ const getLineToComment = (hunk) => {
     if (!hunkHeader) {
         return 1;
     }
-    return hunkHeader.newStartLine + hunkHeader.newLineCount;
+    return hunkHeader.newStartLine + hunkHeader.newLineCount - 1;
 };
 exports.getLineToComment = getLineToComment;
 const shouldExcludeFile = (fileName) => {
