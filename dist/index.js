@@ -32809,9 +32809,16 @@ async function run() {
                     }
                 });
                 const review = JSON.parse(gptResponse.choices[0].message.content);
+                const formattedReviews = review.reviews.map(reviewItem => {
+                    const hunkHeader = (0, utils_1.parseHunkHeader)(reviewItem.hunk);
+                    return {
+                        ...reviewItem,
+                        line: hunkHeader.newStartLine + hunkHeader.newLineCount
+                    };
+                });
                 if (review.score < 75) {
                     // Comment PR with GPT response
-                    for (const reviewItem of review.reviews) {
+                    for (const reviewItem of formattedReviews) {
                         core.info(`Commenting on PR line ${reviewItem.line}...`);
                         try {
                             await octokit.rest.pulls.createReviewComment({
@@ -32853,12 +32860,29 @@ exports.run = run;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.systemContent = exports.baseContent = void 0;
+exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
 exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
-Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. 
+Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
 Answer with a numbered list. Do not go beyond 5 reviews you found in the code. You can provide less than 5 reviews. Each item should be a single concise sentence.
-Use the folowing json format : { "score": value, "reviews": [{ line: number of the line where comment should appear in the patch file, message: "content of the comment}, ...]}`;
+Use the folowing json format : { "score": value, "reviews": [{ hunk: hunk header where comment should appear, message: "content of the comment}, ...]}`;
 exports.systemContent = `You are a software engineer reviewing a patch file from a pull request.`;
+function parseHunkHeader(header) {
+    // Regular expression to match the hunk header format
+    const regex = /@@ \-(\d+),(\d+) \+(\d+),(\d+) @@/;
+    const match = header.match(regex);
+    if (match) {
+        return {
+            originalStartLine: parseInt(match[1], 10),
+            originalLineCount: parseInt(match[2], 10),
+            newStartLine: parseInt(match[3], 10),
+            newLineCount: parseInt(match[4], 10)
+        };
+    }
+    else {
+        throw new Error('Invalid hunk header format');
+    }
+}
+exports.parseHunkHeader = parseHunkHeader;
 
 
 /***/ }),

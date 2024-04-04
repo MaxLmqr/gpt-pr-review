@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import axios from 'axios'
-import { baseContent, systemContent } from './utils'
+import { baseContent, parseHunkHeader, systemContent } from './utils'
 
 type GptResponseFormat = {
   choices: {
@@ -15,7 +15,7 @@ type GptResponseFormat = {
 
 type ReviewJsonFormat = {
   score: number
-  reviews: { line: number; message: string }[]
+  reviews: { line?: number; message: string; hunk: string }[]
 }
 
 const RETURN_CODES = {
@@ -130,9 +130,17 @@ export async function run(): Promise<number> {
           gptResponse.choices[0].message.content
         ) as ReviewJsonFormat
 
+        const formattedReviews = review.reviews.map(reviewItem => {
+          const hunkHeader = parseHunkHeader(reviewItem.hunk)
+          return {
+            ...reviewItem,
+            line: hunkHeader.newStartLine + hunkHeader.newLineCount
+          }
+        })
+
         if (review.score < 75) {
           // Comment PR with GPT response
-          for (const reviewItem of review.reviews) {
+          for (const reviewItem of formattedReviews) {
             core.info(`Commenting on PR line ${reviewItem.line}...`)
             try {
               await octokit.rest.pulls.createReviewComment({
