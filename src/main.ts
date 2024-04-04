@@ -134,15 +134,19 @@ export async function run(): Promise<number> {
           // Comment PR with GPT response
           for (const reviewItem of review.reviews) {
             core.info(`Commenting on PR line ${reviewItem.line}...`)
-            await octokit.rest.pulls.createReviewComment({
-              owner,
-              repo,
-              pull_number: number,
-              body: reviewItem.message,
-              path: filePath,
-              commit_id: commitId,
-              position: reviewItem.line
-            })
+            if (reviewItem.line && reviewItem.message) {
+              await octokit.rest.pulls.createReviewComment({
+                owner,
+                repo,
+                pull_number: number,
+                body: reviewItem.message,
+                path: filePath,
+                commit_id: commitId,
+                position: reviewItem.line ?? 1
+              })
+            } else {
+              core.error(`Invalid review item: ${JSON.stringify(reviewItem)}`)
+            }
           }
         }
       } catch (error) {
