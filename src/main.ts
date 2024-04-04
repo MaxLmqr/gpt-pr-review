@@ -145,7 +145,7 @@ export async function run(): Promise<number> {
         ) as ReviewJsonFormat
 
         const formattedReviews = review.reviews.map(reviewItem => {
-          const line = getLineToComment(reviewItem.hunk, patch)
+          const line = getLineToComment(reviewItem.hunk)
           return {
             ...reviewItem,
             line

@@ -32815,7 +32815,7 @@ async function run() {
                 });
                 const review = JSON.parse(gptResponse.choices[0].message.content);
                 const formattedReviews = review.reviews.map(reviewItem => {
-                    const line = (0, utils_1.getLineToComment)(reviewItem.hunk, patch);
+                    const line = (0, utils_1.getLineToComment)(reviewItem.hunk);
                     return {
                         ...reviewItem,
                         line
@@ -32892,7 +32892,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.shouldExcludeFile = exports.getLineToComment = exports.calculateCommentPositionForHunk = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
+exports.shouldExcludeFile = exports.getLineToComment = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
 Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
@@ -32916,42 +32916,12 @@ const parseHunkHeader = (header) => {
     }
 };
 exports.parseHunkHeader = parseHunkHeader;
-const calculateCommentPositionForHunk = (patch, hunkStart) => {
-    const lines = patch.split('\n');
-    let position = 1; // Position within the diff
-    let inHunk = false;
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        // Check if we're at the start of the hunk we're interested in
-        if (line.startsWith('@@') && line.includes(hunkStart)) {
-            inHunk = true;
-        }
-        // Once in the hunk, continue until the next hunk or end of patch
-        if (inHunk) {
-            if (line.startsWith('@@') && !line.includes(hunkStart)) {
-                // Reached the start of the next hunk, stop.
-                break;
-            }
-            // Increment position for lines within the hunk
-            position++;
-        }
-        else {
-            // Increment position until we reach the hunk
-            if (line.startsWith('@@')) {
-                position++;
-            }
-        }
-    }
-    return inHunk ? position : null; // Return null if hunk not found
-};
-exports.calculateCommentPositionForHunk = calculateCommentPositionForHunk;
-const getLineToComment = (hunk, patch) => {
+const getLineToComment = (hunk) => {
     const hunkHeader = (0, exports.parseHunkHeader)(hunk);
     if (!hunkHeader) {
         return null;
     }
-    const position = (0, exports.calculateCommentPositionForHunk)(patch, hunk);
-    return position;
+    return hunkHeader.originalStartLine + hunkHeader.originalLineCount - 1;
 };
 exports.getLineToComment = getLineToComment;
 const shouldExcludeFile = (fileName) => {

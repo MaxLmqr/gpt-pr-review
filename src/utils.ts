@@ -24,46 +24,12 @@ export const parseHunkHeader = (header: string) => {
   }
 }
 
-export const calculateCommentPositionForHunk = (
-  patch: string,
-  hunkStart: string
-) => {
-  const lines = patch.split('\n')
-  let position = 1 // Position within the diff
-  let inHunk = false
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    // Check if we're at the start of the hunk we're interested in
-    if (line.startsWith('@@') && line.includes(hunkStart)) {
-      inHunk = true
-    }
-    // Once in the hunk, continue until the next hunk or end of patch
-    if (inHunk) {
-      if (line.startsWith('@@') && !line.includes(hunkStart)) {
-        // Reached the start of the next hunk, stop.
-        break
-      }
-      // Increment position for lines within the hunk
-      position++
-    } else {
-      // Increment position until we reach the hunk
-      if (line.startsWith('@@')) {
-        position++
-      }
-    }
-  }
-
-  return inHunk ? position : null // Return null if hunk not found
-}
-
-export const getLineToComment = (hunk: string, patch: string) => {
+export const getLineToComment = (hunk: string) => {
   const hunkHeader = parseHunkHeader(hunk)
   if (!hunkHeader) {
     return null
   }
-  const position = calculateCommentPositionForHunk(patch, hunk)
-  return position
+  return hunkHeader.originalStartLine + hunkHeader.originalLineCount - 1
 }
 
 export const shouldExcludeFile = (fileName: string) => {
