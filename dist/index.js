@@ -32788,6 +32788,10 @@ async function run() {
         for (const file of files) {
             const filePath = file.filename;
             const patch = file.patch;
+            if (!patch) {
+                core.info(`Skipping ${filePath} as it has no patch data...`);
+                continue;
+            }
             // Send the patch data to ChatGPT for review
             try {
                 core.info(`Sending patch data to ChatGPT for ${owner}/${repo}#${number}...`);
@@ -32811,7 +32815,7 @@ async function run() {
                 });
                 const review = JSON.parse(gptResponse.choices[0].message.content);
                 const formattedReviews = review.reviews.map(reviewItem => {
-                    const line = (0, utils_1.getLineToComment)(reviewItem.hunk);
+                    const line = (0, utils_1.getLineToComment)(reviewItem.hunk, patch);
                     return {
                         ...reviewItem,
                         line
@@ -32821,6 +32825,10 @@ async function run() {
                     // Comment PR with GPT response
                     for (const reviewItem of formattedReviews) {
                         core.info(`Commenting on PR line ${reviewItem.line}...`);
+                        if (!reviewItem.line) {
+                            core.error(`Invalid review item - has no position : ${JSON.stringify(reviewItem)}`);
+                            continue;
+                        }
                         try {
                             await octokit.rest.pulls.createReviewComment({
                                 owner,
@@ -32884,7 +32892,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.shouldExcludeFile = exports.getLineToComment = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
+exports.shouldExcludeFile = exports.getLineToComment = exports.calculateCommentPositionForHunk = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
 Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
@@ -32908,12 +32916,42 @@ const parseHunkHeader = (header) => {
     }
 };
 exports.parseHunkHeader = parseHunkHeader;
-const getLineToComment = (hunk) => {
+const calculateCommentPositionForHunk = (patch, hunkStart) => {
+    const lines = patch.split('\n');
+    let position = 1; // Position within the diff
+    let inHunk = false;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // Check if we're at the start of the hunk we're interested in
+        if (line.startsWith('@@') && line.includes(hunkStart)) {
+            inHunk = true;
+        }
+        // Once in the hunk, continue until the next hunk or end of patch
+        if (inHunk) {
+            if (line.startsWith('@@') && !line.includes(hunkStart)) {
+                // Reached the start of the next hunk, stop.
+                break;
+            }
+            // Increment position for lines within the hunk
+            position++;
+        }
+        else {
+            // Increment position until we reach the hunk
+            if (line.startsWith('@@')) {
+                position++;
+            }
+        }
+    }
+    return inHunk ? position : null; // Return null if hunk not found
+};
+exports.calculateCommentPositionForHunk = calculateCommentPositionForHunk;
+const getLineToComment = (hunk, patch) => {
     const hunkHeader = (0, exports.parseHunkHeader)(hunk);
     if (!hunkHeader) {
-        return 1;
+        return null;
     }
-    return hunkHeader.newStartLine + hunkHeader.newLineCount - 1;
+    const position = (0, exports.calculateCommentPositionForHunk)(patch, hunk);
+    return position;
 };
 exports.getLineToComment = getLineToComment;
 const shouldExcludeFile = (fileName) => {

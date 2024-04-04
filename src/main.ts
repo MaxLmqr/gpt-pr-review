@@ -107,6 +107,12 @@ export async function run(): Promise<number> {
     for (const file of files) {
       const filePath = file.filename
       const patch = file.patch
+
+      if (!patch) {
+        core.info(`Skipping ${filePath} as it has no patch data...`)
+        continue
+      }
+
       // Send the patch data to ChatGPT for review
       try {
         core.info(
@@ -139,7 +145,7 @@ export async function run(): Promise<number> {
         ) as ReviewJsonFormat
 
         const formattedReviews = review.reviews.map(reviewItem => {
-          const line = getLineToComment(reviewItem.hunk)
+          const line = getLineToComment(reviewItem.hunk, patch)
           return {
             ...reviewItem,
             line
@@ -150,6 +156,13 @@ export async function run(): Promise<number> {
           // Comment PR with GPT response
           for (const reviewItem of formattedReviews) {
             core.info(`Commenting on PR line ${reviewItem.line}...`)
+            if (!reviewItem.line) {
+              core.error(
+                `Invalid review item - has no position : ${JSON.stringify(reviewItem)}`
+              )
+              continue
+            }
+
             try {
               await octokit.rest.pulls.createReviewComment({
                 owner,
