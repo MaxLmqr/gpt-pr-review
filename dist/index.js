@@ -32917,7 +32917,7 @@ const getLineToComment = (hunk) => {
 };
 exports.getLineToComment = getLineToComment;
 const shouldExcludeFile = (fileName) => {
-    if (fileName.includes('.lock')) {
+    if (fileName.includes('lock')) {
         return true;
     }
     return false;
