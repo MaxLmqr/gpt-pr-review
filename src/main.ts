@@ -47,7 +47,7 @@ const handleError = (
 export async function run(): Promise<number> {
   try {
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Starting action...`)
+    core.info(`Starting action...`)
 
     // Fetching github token and getting octokit client
     const githubToken = core.getInput('github-token')
@@ -57,7 +57,7 @@ export async function run(): Promise<number> {
     // Get the context
     const { owner, repo, number } = github.context.issue
 
-    core.debug(`Fetching PR data for ${owner}/${repo}#${number}...`)
+    core.info(`Fetching PR data for ${owner}/${repo}#${number}...`)
     const { data: pr } = await octokit.rest.pulls.get({
       owner,
       repo,
@@ -67,7 +67,7 @@ export async function run(): Promise<number> {
     const commitId = pr.head.sha
 
     // Get PR files modified
-    core.debug(`Fetching PR files for ${owner}/${repo}#${number}...`)
+    core.info(`Fetching PR files for ${owner}/${repo}#${number}...`)
     const { data: files } = await octokit.rest.pulls.listFiles({
       owner,
       repo,
@@ -75,7 +75,7 @@ export async function run(): Promise<number> {
     })
 
     // List comments on the pull request
-    core.debug(`Fetching PR comments for ${owner}/${repo}#${number}...`)
+    core.info(`Fetching PR comments for ${owner}/${repo}#${number}...`)
     const { data: comments } = await octokit.rest.pulls.listReviewComments({
       owner,
       repo,
@@ -83,7 +83,7 @@ export async function run(): Promise<number> {
     })
 
     // Find and delete the comment at the specific position
-    core.debug(`Deleting existing comments for ${owner}/${repo}#${number}...`)
+    core.info(`Deleting existing comments for ${owner}/${repo}#${number}...`)
     for (const comment of comments) {
       if (comment.user.login === 'github-actions[bot]') {
         await octokit.rest.pulls.deleteReviewComment({
@@ -95,13 +95,13 @@ export async function run(): Promise<number> {
       }
     }
 
-    core.debug(`Processing PR files for ${owner}/${repo}#${number}...`)
+    core.info(`Processing PR files for ${owner}/${repo}#${number}...`)
     for (const file of files) {
       const filePath = file.filename
       const patch = file.patch
       // Send the patch data to ChatGPT for review
       try {
-        core.debug(
+        core.info(
           `Sending patch data to ChatGPT for ${owner}/${repo}#${number}...`
         )
         const { data: gptResponse } = await axios.post<GptResponseFormat>(
@@ -133,6 +133,7 @@ export async function run(): Promise<number> {
         if (review.score < 75) {
           // Comment PR with GPT response
           for (const reviewItem of review.reviews) {
+            core.info(`Commenting on PR line ${reviewItem.line}...`)
             await octokit.rest.pulls.createReviewComment({
               owner,
               repo,
