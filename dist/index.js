@@ -32894,8 +32894,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.shouldExcludeFile = exports.getLineToComment = exports.parseHunkHeader = exports.systemContent = exports.baseContent = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices.
-Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best. Rate 100 if the file is not maintained by developer, such as lockfile.
+exports.baseContent = `Review GitHub patch file. Focus your evaluation on adherence to coding best practices. Focus on strict necessary comments to improve code quality.
+Rate the code on a scale from 1 to 100, where 1 is the worst and 100 is the best.
 Answer with a numbered list. Do not go beyond 5 reviews you found in the code. You can provide less than 5 reviews. Each item should be a single concise sentence. You can provide a snippet of a code improvment.
 Use the folowing json format : { "score": value, "reviews": [{ hunk: hunk header where comment should appear, it should have the format "@@ -number, number +number, number @@" , message: "content of the comment}, ...]}`;
 exports.systemContent = `You are a software engineer reviewing a patch file from a pull request.`;
