@@ -32924,8 +32924,24 @@ const getLineToComment = (hunk) => {
     return hunkHeader.newStartLine + hunkHeader.newLineCount - 1;
 };
 exports.getLineToComment = getLineToComment;
+const isAssetFile = (fileName) => {
+    const assetExtensions = [
+        '.png',
+        '.jpg',
+        '.jpeg',
+        '.gif',
+        '.svg',
+        '.webp',
+        '.pdf',
+        '.js'
+    ];
+    return assetExtensions.some(extension => fileName.endsWith(extension));
+};
 const shouldExcludeFile = (fileName) => {
     if (fileName.includes('lock')) {
+        return true;
+    }
+    if (isAssetFile(fileName)) {
         return true;
     }
     return false;

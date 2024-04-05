@@ -32,8 +32,25 @@ export const getLineToComment = (hunk: string) => {
   return hunkHeader.newStartLine + hunkHeader.newLineCount - 1
 }
 
+const isAssetFile = (fileName: string) => {
+  const assetExtensions = [
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.svg',
+    '.webp',
+    '.pdf',
+    '.js'
+  ]
+  return assetExtensions.some(extension => fileName.endsWith(extension))
+}
+
 export const shouldExcludeFile = (fileName: string) => {
   if (fileName.includes('lock')) {
+    return true
+  }
+  if (isAssetFile(fileName)) {
     return true
   }
   return false
