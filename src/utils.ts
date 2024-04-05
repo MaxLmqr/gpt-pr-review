@@ -40,8 +40,7 @@ const isAssetFile = (fileName: string) => {
     '.gif',
     '.svg',
     '.webp',
-    '.pdf',
-    '.js'
+    '.pdf'
   ]
   return assetExtensions.some(extension => fileName.endsWith(extension))
 }
